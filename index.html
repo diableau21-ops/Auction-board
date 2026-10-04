@@ -59,141 +59,566 @@ button.alt{background:#1c2430;color:var(--blue);border:2px solid var(--blue)}
 .pill+.pill,.timer{animation:float 2s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.pill+.pill,.timer{animation:none}}
 #ov{position:absolute;inset:0;z-index:10;background:#000;border-radius:12px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px}#ov.on{display:flex}
-.ovt{color:var(--gold);font:400 22px "Lilita One",Impact,sans-serif;text-transform:uppercase}#ovn{color:#fff;font:400 44px/1.1 "Lilita One",Impact,sans-serif;overflow-wrap:anywhere}#ova{color:var(--gold);font:400 22px "Lilita One",Impact,sans-serif}
+.ovt{color:var(--gold);font:400 22px "Lilita One",Impact,sans-serif;text-transform:uppercase}
+#ovn{color:#fff;font:400 44px/1.1 "Lilita One",Impact,sans-serif;overflow-wrap:anywhere}
+#ova{color:var(--gold);font:400 22px "Lilita One",Impact,sans-serif}
 a.lnk{display:grid;place-items:center;font:400 17px "Lilita One",Impact,sans-serif;background:#1c2430;color:var(--blue);border:2px solid var(--blue);border-radius:10px;padding:10px 16px;text-transform:uppercase;text-decoration:none}
 .opt{display:flex;align-items:center;gap:8px;font-size:13px;justify-content:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
+
 <body>
 <div class="wrap">
   <h1>Live auction</h1>
+
   <div id="board">
-  <div class="box vouch">★ <span id="vc">526</span> vouches</div>
-  <div class="box pill">Min: <span class="tag">1 <i class="coin"></i></span></div>
-  <div class="box pill">Snipe delay <span class="tag red">30s</span></div>
-  <div class="box timer" id="timer"><span>Snipe delay</span><b id="clock">0:00</b></div>
-  <div class="box rank">
-    <div id="rows"></div>
-    <div class="part" id="part">Total participants: 0</div>
-    <div class="win" id="win"></div>
+    <div class="box vouch">★ <span id="vc">526</span> vouches</div>
+    <div class="box pill">Min: <span class="tag">1 <i class="coin"></i></span></div>
+    <div class="box pill">Snipe delay <span class="tag red">30s</span></div>
+    <div class="box timer" id="timer"><span>Snipe delay</span><b id="clock">0:00</b></div>
+
+    <div class="box rank">
+      <div id="rows"></div>
+      <div class="part" id="part">Total participants: 0</div>
+      <div class="win" id="win"></div>
+    </div>
+
+    <div id="ov">
+      <div class="ovt">🏆 Winner</div>
+      <div id="ovn"></div>
+      <div id="ova"></div>
+    </div>
+
+    <div id="vpop" role="status"></div>
   </div>
-  <div id="ov"><div class="ovt">🏆 Winner</div><div id="ovn"></div><div id="ova"></div></div>
-  <div id="vpop" role="status"></div>
-  </div>
+
   <div class="ctl">
-    <div class="f"><input id="quick" placeholder="Chat: name amount, or vouch" autocomplete="off"><button class="alt" id="addv">Vouch +1</button></div>
-    <div class="f"><input id="botname" maxlength="16" placeholder="Fake bot: name (empty = random)" autocomplete="off"><button class="alt" id="addbot">Bot +1</button></div>
-    <div class="f"><input id="name" maxlength="16" placeholder="Your name" autocomplete="off"></div>
-    <div class="f"><input id="amt" type="number" inputmode="numeric" min="1" placeholder="Your bid (coins)"><button id="go">Bid</button></div>
-    <div class="f"><button class="q" data-p="1">+1</button><button class="q" data-p="5">+5</button><button class="q" data-p="10">+10</button></div>
+    <div class="f">
+      <input id="quick" placeholder="Chat: name amount, or vouch" autocomplete="off">
+      <button class="alt" id="addv">Vouch +1</button>
+    </div>
+
+    <div class="f">
+      <input id="botname" maxlength="16" placeholder="Fake bot: name (empty = random)" autocomplete="off">
+      <button class="alt" id="addbot">Bot +1</button>
+    </div>
+
+    <div class="f">
+      <input id="name" maxlength="16" placeholder="Your name" autocomplete="off">
+    </div>
+
+    <div class="f">
+      <input id="amt" type="number" inputmode="numeric" min="1" placeholder="Your bid (coins)">
+      <button id="go">Bid</button>
+    </div>
+
+    <div class="f">
+      <button class="q" data-p="1">+1</button>
+      <button class="q" data-p="5">+5</button>
+      <button class="q" data-p="10">+10</button>
+    </div>
+
     <div class="msg" id="msg" aria-live="polite"></div>
-    <div class="f"><button id="ct">Connect TikTok</button><a class="lnk" href="https://tikfinity.zerody.one/" target="_blank" rel="noopener">Get TikFinity</a></div>
+
+    <div class="f">
+      <button id="ct">Connect TikTok</button>
+      <a class="lnk" href="https://tikfinity.zerody.one/" target="_blank" rel="noopener">Get TikFinity</a>
+    </div>
+
     <div class="msg" id="tt" style="color:#d92d20">TikFinity: not connected</div>
-    <label class="opt"><input type="checkbox" id="bots" checked style="flex:none;width:18px;height:18px"> Simulated players</label>
+
+    <label class="opt">
+      <input type="checkbox" id="bots" checked style="flex:none;width:18px;height:18px">
+      Simulated players
+    </label>
+
     <button id="start">Start timer</button>
     <button class="alt" id="disp">Live display mode (Esc to exit)</button>
     <button id="reset">New auction</button>
   </div>
 </div>
+
 <script>
 (function(){
+
+/* ===== MODE AUTOMATIQUE ===== */
+var params = new URLSearchParams(location.search);
+var autoLive = params.get("overlay") === "1";
+
+/* ===== AUCTION ===== */
 var MIN=1,DELAY=30,MAIN=60,bids={},end=0,ph=0,over=false,me="",disp=false,ch=null,vouches=526;
+
 var $=function(i){return document.getElementById(i)};
-try{me=localStorage.getItem("ab-name")||"";vouches=+localStorage.getItem("ab-v")||526}catch(e){}
+
+try{
+  me=localStorage.getItem("ab-name")||"";
+  vouches=+localStorage.getItem("ab-v")||526
+}catch(e){}
+
 $("name").value=me;
-$("name").addEventListener("input",function(){me=this.value.trim();try{localStorage.setItem("ab-name",me)}catch(e){}});
-function top(){return Object.keys(bids).map(function(k){return[k,bids[k]]}).sort(function(a,b){return b[1]-a[1]})}
-function esc(s){return s.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+$("name").addEventListener("input",function(){
+  me=this.value.trim();
+  try{localStorage.setItem("ab-name",me)}catch(e){}
+});
+
+function top(){
+  return Object.keys(bids)
+    .map(function(k){return[k,bids[k]]})
+    .sort(function(a,b){return b[1]-a[1]})
+}
+
+function esc(s){
+  return s.replace(/[&<>"]/g,function(c){
+    return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]
+  })
+}
+
 function render(){
   var t=top(),m=["🥇","🥈","🥉"],h="";
-  for(var i=0;i<3;i++){var r=t[i];
-    h+='<div class="r g'+(i+1)+'"><span class="medal">'+m[i]+'</span><span class="av">'+(r?esc(r[0][0].toUpperCase()):"?")+'</span><span class="who"><div class="nm">'+(r?esc(r[0]):"—")+'</div><div class="am">'+(r?r[1]:0)+' <i class="coin"></i></div></span></div>';}
-  if(h!==lastH){$("rows").innerHTML=h;lastH=h}$("rows").style.cssText="display:flex;flex-direction:column;gap:8px";
-  $("part").textContent="Total participants: "+t.length;$("vc").textContent=vouches;$("ov").className=over?"on":"";if(over){$("ovn").textContent=t[0]?t[0][0]:"No winner";$("ova").textContent=t[0]?t[0][1]+" coins":""}
+
+  for(var i=0;i<3;i++){
+    var r=t[i];
+
+    h+='<div class="r g'+(i+1)+'">'+
+      '<span class="medal">'+m[i]+'</span>'+
+      '<span class="av">'+(r?esc(r[0][0].toUpperCase()):"?")+'</span>'+
+      '<span class="who">'+
+      '<div class="nm">'+(r?esc(r[0]):"—")+'</div>'+
+      '<div class="am">'+(r?r[1]:0)+' <i class="coin"></i></div>'+
+      '</span>'+
+      '</div>';
+  }
+
+  if(h!==lastH){
+    $("rows").innerHTML=h;
+    lastH=h
+  }
+
+  $("rows").style.cssText="display:flex;flex-direction:column;gap:8px";
+  $("part").textContent="Total participants: "+t.length;
+  $("vc").textContent=vouches;
+  $("ov").className=over?"on":"";
+
+  if(over){
+    $("ovn").textContent=t[0]?t[0][0]:"No winner";
+    $("ova").textContent=t[0]?t[0][1]+" coins":""
+  }
+
   var left=end?Math.max(0,Math.ceil((end-Date.now())/1000)):0;
-  if(!disp&&end&&left===0&&ph===1){ph=2;end=Date.now()+DELAY*1000;left=DELAY;send()}
+
+  if(!disp&&end&&left===0&&ph===1){
+    ph=2;
+    end=Date.now()+DELAY*1000;
+    left=DELAY;
+    send()
+  }
+
   $("clock").textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
   $("timer").className="box timer"+(ph!==2?" live":"");
-  if(!disp&&end&&left===0&&!over){over=true;var w=t[0];$("win").textContent=w?"🏆 "+w[0]+" wins with "+w[1]+" coins!":"Ended with no bids.";send();flushV()}
-  $("go").disabled=over;$("start").disabled=!!end;document.querySelectorAll(".q").forEach(function(b){b.disabled=over});
+
+  if(!disp&&end&&left===0&&!over){
+    over=true;
+    var w=t[0];
+
+    $("win").textContent=w?
+      "🏆 "+w[0]+" wins with "+w[1]+" coins!":
+      "Ended with no bids.";
+
+    send();
+    flushV()
+  }
+
+  $("go").disabled=over;
+  $("start").disabled=!!end;
+
+  document.querySelectorAll(".q").forEach(function(b){
+    b.disabled=over
+  })
 }
+
 function place(n,v){
   var t=top(),hi=t.length?t[0][1]:0,need=Math.max(MIN,hi+1);
+
   if(!end)return"Start the timer first.";
   if(over)return"The auction has ended.";
   if(!n)return"Enter your name first.";
   if(!(v>=need))return"Your bid must be at least "+need+" coins.";
-  bids[n]=v;coinFx(n);return"";
+
+  bids[n]=v;
+  coinFx(n);
+  return"";
 }
-function me_bid(v){$("msg").style.color="#d92d20";var e=place(me,v);$("msg").textContent=e;if(!e)$("amt").value="";render();send()}
-$("go").addEventListener("click",function(){me_bid(Math.floor(+$("amt").value))});
-$("amt").addEventListener("keydown",function(e){if(e.key==="Enter")$("go").click()});
-document.querySelectorAll(".q").forEach(function(b){b.addEventListener("click",function(){
-  var t=top(),hi=t.length?t[0][1]:MIN-1;me_bid(hi+ +b.dataset.p)})});
-$("reset").addEventListener("click",function(){bids={};end=0;ph=0;over=false;pend=[];$("msg").textContent="";$("win").textContent="";render();send()});
+
+function me_bid(v){
+  $("msg").style.color="#d92d20";
+  var e=place(me,v);
+  $("msg").textContent=e;
+
+  if(!e)$("amt").value="";
+
+  render();
+  send()
+}
+
+$("go").addEventListener("click",function(){
+  me_bid(Math.floor(+$("amt").value))
+});
+
+$("amt").addEventListener("keydown",function(e){
+  if(e.key==="Enter")$("go").click()
+});
+
+document.querySelectorAll(".q").forEach(function(b){
+  b.addEventListener("click",function(){
+    var t=top(),hi=t.length?t[0][1]:MIN-1;
+    me_bid(hi+ +b.dataset.p)
+  })
+});
+
+$("reset").addEventListener("click",function(){
+  bids={};
+  end=0;
+  ph=0;
+  over=false;
+  pend=[];
+  $("msg").textContent="";
+  $("win").textContent="";
+  render();
+  send()
+});
+
 var bots=["Ziroms","Kaito","Luna","Moxie"];
+
 function bot(){
   if(!disp&&$("bots").checked&&end&&!over&&Math.random()<.45){
-    var n=bots[Math.floor(Math.random()*bots.length)],hi=top()[0][1];
-    place(n,hi+1+Math.floor(Math.random()*5));render();send();}
-  setTimeout(bot,5000+Math.random()*7000);
+    var n=bots[Math.floor(Math.random()*bots.length)];
+    var hi=top()[0][1];
+
+    place(n,hi+1+Math.floor(Math.random()*5));
+    render();
+    send()
+  }
+
+  setTimeout(bot,5000+Math.random()*7000)
 }
-function send(){if(ch&&!disp)ch.postMessage({vouches:vouches,bids:bids,end:end,ph:ph,over:over,win:$("win").textContent})}
-try{ch=new BroadcastChannel("auction-board");ch.onmessage=function(e){var d=e.data;
- if(d.coin){if(disp)coinFx(d.coin,true);return}
- if(d.vouchName){if(disp)showV(d.vouchName);return}
- if(d.req){if(!disp)send();return}
- if(disp){vouches=d.vouches;bids=d.bids;end=d.end;ph=d.ph;over=d.over;$("win").textContent=d.win;render()}}}catch(e){}
+
+function send(){
+  if(ch&&!disp)
+    ch.postMessage({
+      vouches:vouches,
+      bids:bids,
+      end:end,
+      ph:ph,
+      over:over,
+      win:$("win").textContent
+    })
+}
+
+try{
+  ch=new BroadcastChannel("auction-board");
+
+  ch.onmessage=function(e){
+    var d=e.data;
+
+    if(d.coin){
+      if(disp)coinFx(d.coin,true);
+      return
+    }
+
+    if(d.vouchName){
+      if(disp)showV(d.vouchName);
+      return
+    }
+
+    if(d.req){
+      if(!disp)send();
+      return
+    }
+
+    if(disp){
+      vouches=d.vouches;
+      bids=d.bids;
+      end=d.end;
+      ph=d.ph;
+      over=d.over;
+      $("win").textContent=d.win;
+      render()
+    }
+  }
+}catch(e){}
+
 var lastH="";
+
 function coinFx(n,remote){
- if(!remote&&ch&&!disp)ch.postMessage({coin:n});
- if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
- setTimeout(function(){var t=top(),i=-1;for(var k=0;k<t.length;k++)if(t[k][0]===n)i=k;
-  var rows=$("rows"),el=(i>-1&&i<3)?rows.children[i]:rows.parentNode;
-  el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump")},40)}
+  if(!remote&&ch&&!disp)
+    ch.postMessage({coin:n});
+
+  if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)
+    return;
+
+  setTimeout(function(){
+    var t=top(),i=-1;
+
+    for(var k=0;k<t.length;k++)
+      if(t[k][0]===n)i=k;
+
+    var rows=$("rows");
+    var el=(i>-1&&i<3)?rows.children[i]:rows.parentNode;
+
+    el.classList.remove("bump");
+    void el.offsetWidth;
+    el.classList.add("bump")
+  },40)
+}
+
 var vt=0;
-function showV(n){var el=$("vpop");el.textContent=n+" vouched!";el.classList.add("on");clearTimeout(vt);vt=setTimeout(function(){el.classList.remove("on")},3000)}
+
+function showV(n){
+  var el=$("vpop");
+
+  el.textContent=n+" vouched!";
+  el.classList.add("on");
+
+  clearTimeout(vt);
+
+  vt=setTimeout(function(){
+    el.classList.remove("on")
+  },3000)
+}
+
 var pend=[];
-function applyV(n){vouches++;try{localStorage.setItem("ab-v",vouches)}catch(e){}showV(n);render();send();if(ch)ch.postMessage({vouchName:n})}
-function flushV(){var l=pend;pend=[];l.forEach(function(n,i){setTimeout(function(){applyV(n)},i*1600)})}
-function addV(n){n=n||me||"A player";
- if(over){applyV(n);return}
- pend.push(n);$("msg").style.color="#18794e";$("msg").textContent=n+"'s vouch saved for the end ("+pend.length+" pending).";}
-function setDisp(on){disp=on;document.body.classList.toggle("live-mode",on);if(on){if(ch)ch.postMessage({req:1})}else send()}
-$("disp").addEventListener("click",function(){setDisp(true)});
-document.addEventListener("keydown",function(e){if(e.key==="Escape"&&disp)setDisp(false)});
-document.addEventListener("dblclick",function(){if(disp)setDisp(false)});
-$("quick").addEventListener("keydown",function(e){if(e.key!=="Enter")return;
- if(/vouch/i.test(this.value)){var nm=this.value.replace(/vouch(es)?/ig,"").replace(/[:!]/g," ").trim().slice(0,16);this.value="";addV(nm);return}
- var m=this.value.trim().match(/^(.+?)[\s:=]+(\d+)$/);$("msg").style.color="#d92d20";
- if(!m){$("msg").textContent="Type: name amount (e.g. Ziroms 22)";return}
- var er=place(m[1].trim().slice(0,16),+m[2]);$("msg").textContent=er;if(!er)this.value="";render();send()});
+
+function applyV(n){
+  vouches++;
+
+  try{
+    localStorage.setItem("ab-v",vouches)
+  }catch(e){}
+
+  showV(n);
+  render();
+  send();
+
+  if(ch)ch.postMessage({vouchName:n})
+}
+
+function flushV(){
+  var l=pend;
+  pend=[];
+
+  l.forEach(function(n,i){
+    setTimeout(function(){
+      applyV(n)
+    },i*1600)
+  })
+}
+
+function addV(n){
+  n=n||me||"A player";
+
+  if(over){
+    applyV(n);
+    return
+  }
+
+  pend.push(n);
+
+  $("msg").style.color="#18794e";
+  $("msg").textContent=n+"'s vouch saved for the end ("+pend.length+" pending).";
+}
+
+function setDisp(on){
+  disp=on;
+  document.body.classList.toggle("live-mode",on);
+
+  if(on){
+    if(ch)ch.postMessage({req:1})
+  }else{
+    send()
+  }
+}
+
+$("disp").addEventListener("click",function(){
+  setDisp(true)
+});
+
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&disp)setDisp(false)
+});
+
+document.addEventListener("dblclick",function(){
+  if(disp)setDisp(false)
+});
+
+$("quick").addEventListener("keydown",function(e){
+  if(e.key!=="Enter")return;
+
+  if(/vouch/i.test(this.value)){
+    var nm=this.value
+      .replace(/vouch(es)?/ig,"")
+      .replace(/[:!]/g," ")
+      .trim()
+      .slice(0,16);
+
+    this.value="";
+    addV(nm);
+    return
+  }
+
+  var m=this.value.trim().match(/^(.+?)[\s:=]+(\d+)$/);
+
+  $("msg").style.color="#d92d20";
+
+  if(!m){
+    $("msg").textContent="Type: name amount (e.g. Ziroms 22)";
+    return
+  }
+
+  var er=place(m[1].trim().slice(0,16),+m[2]);
+
+  $("msg").textContent=er;
+
+  if(!er)this.value="";
+
+  render();
+  send()
+});
+
 $("addbot").addEventListener("click",function(){
- var n=$("botname").value.trim().slice(0,16)||bots[Math.floor(Math.random()*bots.length)];
- var t=top(),hi=t.length?t[0][1]:MIN-1;$("msg").style.color="#d92d20";
- var er=place(n,hi+1);$("msg").textContent=er;render();send()});
-$("addv").addEventListener("click",function(){var q=$("quick").value.replace(/vouch(es)?/ig,"").trim().slice(0,16);$("quick").value="";addV(q)});
-$("start").addEventListener("click",function(){if(end)return;end=Date.now()+MAIN*1000;ph=1;render();send()});
-function giftIn(n,c){if(!end||over||!(c>0))return;n=String(n).slice(0,16);bids[n]=(bids[n]||0)+c;coinFx(n);render();send()}
+  var n=$("botname").value.trim().slice(0,16)||
+    bots[Math.floor(Math.random()*bots.length)];
+
+  var t=top(),hi=t.length?t[0][1]:MIN-1;
+
+  $("msg").style.color="#d92d20";
+
+  var er=place(n,hi+1);
+
+  $("msg").textContent=er;
+
+  render();
+  send()
+});
+
+$("addv").addEventListener("click",function(){
+  var q=$("quick").value
+    .replace(/vouch(es)?/ig,"")
+    .trim()
+    .slice(0,16);
+
+  $("quick").value="";
+  addV(q)
+});
+
+$("start").addEventListener("click",function(){
+  if(end)return;
+
+  end=Date.now()+MAIN*1000;
+  ph=1;
+
+  render();
+  send()
+});
+
+function giftIn(n,c){
+  if(!end||over||!(c>0))return;
+
+  n=String(n).slice(0,16);
+  bids[n]=(bids[n]||0)+c;
+
+  coinFx(n);
+  render();
+  send()
+}
+
 var ws=null,rt=0;
-function conn(){clearTimeout(rt);var t=$("tt");if(ws&&ws.readyState<2)return;
- try{ws=new WebSocket("ws://localhost:21213/")}catch(e){t.textContent="TikFinity : navigateur non compatible";return}
- ws.onopen=function(){t.style.color="#18794e";t.textContent="TikFinity: connected"};
- ws.onmessage=function(m){if(disp)return;var j;try{j=JSON.parse(m.data)}catch(e){return}
-  if(j.event!=="gift")return;var d=j.data||{};
-  if(d.giftType===1&&!d.repeatEnd)return;
-  giftIn(d.nickname||d.uniqueId||"Anonyme",(+d.diamondCount||1)*(+d.repeatCount||1))};
- ws.onclose=function(){t.style.color="#d92d20";t.textContent="TikFinity: not connected. Open TikFinity Desktop and connect your TikTok @username (retrying...)";rt=setTimeout(conn,3000)};
- ws.onerror=function(){try{ws.close()}catch(e){}}}
+
+function conn(){
+  clearTimeout(rt);
+
+  var t=$("tt");
+
+  if(ws&&ws.readyState<2)return;
+
+  try{
+    ws=new WebSocket("ws://localhost:21213/")
+  }catch(e){
+    t.textContent="TikFinity : navigateur non compatible";
+    return
+  }
+
+  ws.onopen=function(){
+    t.style.color="#18794e";
+    t.textContent="TikFinity: connected"
+  };
+
+  ws.onmessage=function(m){
+    if(disp)return;
+
+    var j;
+
+    try{
+      j=JSON.parse(m.data)
+    }catch(e){
+      return
+    }
+
+    if(j.event!=="gift")return;
+
+    var d=j.data||{};
+
+    if(d.giftType===1&&!d.repeatEnd)return;
+
+    giftIn(
+      d.nickname||d.uniqueId||"Anonyme",
+      (+d.diamondCount||1)*(+d.repeatCount||1)
+    )
+  };
+
+  ws.onclose=function(){
+    t.style.color="#d92d20";
+
+    t.textContent="TikFinity: not connected. Open TikFinity Desktop and connect to your TikTok @username (retrying...)";
+
+    rt=setTimeout(conn,3000)
+  };
+
+  ws.onerror=function(){
+    try{ws.close()}catch(e){}
+  }
+}
+
 conn();
-$("ct").addEventListener("click",function(){var t=$("tt");
- if(ws&&ws.readyState===1){t.style.color="#18794e";t.textContent="TikFinity: already connected. Waiting for gifts.";return}
- t.style.color="#d92d20";t.textContent="Connecting... Make sure TikFinity Desktop is open and connected to your TikTok @username.";conn()});
+
+$("ct").addEventListener("click",function(){
+  var t=$("tt");
+
+  if(ws&&ws.readyState===1){
+    t.style.color="#18794e";
+    t.textContent="TikFinity: already connected. Waiting for gifts.";
+    return
+  }
+
+  t.style.color="#d92d20";
+  t.textContent="Connecting... Make sure TikFinity Desktop is open and connected to your TikTok @username.";
+
+  conn()
+});
+
 setInterval(send,2000);
-setInterval(render,250);setTimeout(bot,6000);render();
+setInterval(render,250);
+setTimeout(bot,6000);
+
+render();
+
+/* ===== ACTIVE AUTOMATIC LIVE MODE ===== */
+if(autoLive){
+  setDisp(true);
+}
+
 })();
 </script>
 </body>
 </html>
-
